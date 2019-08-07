@@ -32,6 +32,9 @@ function cloneChildren(
     .then((clonedChild: HTMLElement | null) => {
       if (clonedChild) {
         clonedNode.appendChild(clonedChild)
+      } else if (isInShadow(child)){
+        var clonedShadow = cloneShadow(child);
+        clonedNode.attachShadow({mode:'open'}).appendChild(clonedChild);
       }
     }),                  Promise.resolve())
     .then(() => clonedNode)
@@ -95,4 +98,26 @@ export default function cloneNode(
     .then(cloneSingleNode)
     .then(clonedNode => cloneChildren(domNode, clonedNode, filter))
     .then(clonedNode => decorate(domNode, clonedNode))
+}
+function cloneShadow(shadow) {
+  const frag = document.createDocumentFragment();
+
+  var nodes = [...shadow.childNodes];
+  nodes.forEach(
+    node => {
+      node.remove();
+      frag.appendChild(node.cloneNode(true));
+      shadow.appendChild(node);
+    }
+  );
+
+  return frag;
+}
+function isInShadow(node) {
+    for (; node; node = node.parentNode) {
+        if (node.toString() === "[object ShadowRoot]") {
+            return true;
+        }
+    }
+    return false;
 }
